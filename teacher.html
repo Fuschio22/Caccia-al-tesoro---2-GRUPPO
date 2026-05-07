@@ -29,11 +29,20 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #5f6368; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
         tr:hover { background: #f8f9fa; }
-        .tag { padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; display: inline-block; }
-        .tag-start { background: #e3f2fd; color: #1976d2; }
-        .tag-correct { background: #e6f4ea; color: #0f9d58; }
-        .tag-complete { background: #fce8e6; color: #c5221f; }
-        .risposta-box { background: #f8f9fa; padding: 6px 10px; border-radius: 6px; font-size: 0.95em; color: #333; border-left: 3px solid #667eea; display: inline-block; max-width: 300px; word-break: break-word; }
+        
+        .check-mark { color: #0f9d58; font-size: 1.5em; font-weight: bold; display: inline-block; }
+        
+        .risposta-box { 
+            background: #f8f9fa; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            font-size: 0.95em; 
+            color: #333; 
+            /* RIMOSSO border-left che creava l'effetto parentesi */
+            display: inline-block; 
+            max-width: 300px; 
+            word-break: break-word; 
+        }
         
         @media (max-width: 600px) { header { flex-direction: column; align-items: flex-start; gap: 15px; } table { font-size: 0.85em; } th, td { padding: 10px; } }
     </style>
@@ -95,10 +104,9 @@
             }
         }
 
-        // ✅ FUNZIONE CORRETTA: rimuove TUTTI i caratteri speciali
         function pulisciRisposta(testo) {
             if (!testo) return '-';
-            // Rimuove: virgolette "", apici ', parentesi tonde (), parentesi quadre [], parentesi graffe {}
+            // Rimuove caratteri speciali
             return testo.replace(/["'()\[\]{}]/g, '').trim();
         }
 
@@ -129,19 +137,24 @@
                 countWithCorrect++;
 
                 const row = document.createElement('tr');
-                let tagClass = 'tag-start';
-                let azioneTesto = '🚀 Inizio';
-                if (e.tipo === 'risposta_corretta') { tagClass = 'tag-correct'; azioneTesto = '✅ Risposta Corretta'; }
-                if (e.tipo === 'completato') { tagClass = 'tag-complete'; azioneTesto = '🎉 Completato!'; }
+                
+                let azioneHTML = '';
+                if (e.tipo === 'inizio') {
+                    azioneHTML = '<span style="color:#1976d2; font-weight:bold;">🚀 Inizio</span>';
+                } else if (e.tipo === 'risposta_corretta') {
+                    azioneHTML = '<span class="check-mark">✔️</span>';
+                } else if (e.tipo === 'completato') {
+                    azioneHTML = '<span style="color:#c5221f; font-weight:bold;">🎉 Completato</span>';
+                }
 
-                // ✅ Mostra la risposta completamente pulita
+                // ✅ La risposta è ora pulita e senza barre laterali
                 const rispostaPulita = pulisciRisposta(e.risposta);
                 const rispostaMostrata = `<div class="risposta-box">${rispostaPulita}</div>`;
 
                 row.innerHTML = `
                     <td>${date}</td>
                     <td><strong>${e.teamName}</strong></td>
-                    <td><span class="tag ${tagClass}">${azioneTesto}</span></td>
+                    <td style="text-align:center; font-size:1.3em">${azioneHTML}</td>
                     <td>${rispostaMostrata}</td>
                     <td>
                         <div style="background:#eee;height:6px;border-radius:3px;width:100px;display:inline-block;vertical-align:middle;margin-right:10px">
