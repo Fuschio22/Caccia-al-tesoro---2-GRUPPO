@@ -81,7 +81,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Mappa ID domanda -> Testo leggibile
         const questionMap = {
             'stage1q1': 'Chi è l\'angelo?',
             'stage1q2': 'Cosa annuncia a Maria?',
@@ -119,31 +118,41 @@
                 return;
             }
 
-            // Ordina per ora decrescente (più recenti in alto)
             const events = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
             const teams = new Set(events.map(e => e.teamName));
             let correct = 0, wrong = 0;
 
             events.forEach(e => {
+                // Conta solo le risposte (corrette o sbagliate)
                 if (e.tipo === 'risposta_corretta') correct++;
                 else if (e.tipo === 'risposta_sbagliata') wrong++;
 
+                // ✅ MOSTRA SOLO LE RISPOSTE (salta 'inizio' e 'completato')
+                if (e.tipo !== 'risposta_corretta' && e.tipo !== 'risposta_sbagliata') {
+                    return; // Salta questa riga nella tabella
+                }
+
                 const domanda = questionMap[e.dettaglio] || e.dettaglio;
-                const esito = e.tipo === 'risposta_corretta' 
-                    ? '<span class="correct">✅ Corretta</span>' 
-                    : '<span class="wrong">❌ Errata</span>';
+                
+                // ✅ LOGICA CORRETTA PER L'ESITO
+                let esitoHTML = '';
+                if (e.tipo === 'risposta_corretta') {
+                    esitoHTML = '<span class="correct">✅ Corretta</span>';
+                } else if (e.tipo === 'risposta_sbagliata') {
+                    esitoHTML = '<span class="wrong">❌ Errata</span>';
+                }
 
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${e.teamName}</strong></td>
                         <td>${domanda}</td>
                         <td><span class="answer-cell">${pulisciRisposta(e.risposta)}</span></td>
-                        <td>${esito}</td>
+                        <td>${esitoHTML}</td>
                         <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
                     </tr>`;
             });
 
-            document.getElementById('totalAnswers').textContent = events.length;
+            document.getElementById('totalAnswers').textContent = correct + wrong;
             document.getElementById('correctAnswers').textContent = correct;
             document.getElementById('wrongAnswers').textContent = wrong;
             document.getElementById('activeStudents').textContent = teams.size;
