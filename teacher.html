@@ -4,25 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Docente - Firebase Live</title>
+    <!-- Import Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body{font-family:Arial,sans-serif;padding:20px;background:#f5f5f5}.dashboard{background:white;padding:30px;border-radius:10px;max-width:1200px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,0.1)}h1{color:#2a5298;margin-bottom:10px}.subtitle{color:#666;margin-bottom:30px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px}.stat-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px;border-radius:10px;text-align:center}.stat-card h3{font-size:2.5em;margin:10px 0}.stat-card p{opacity:0.9}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd}th{background:#2a5298;color:white}tr:hover{background:#f5f5f5}.completato{color:#28a745;font-weight:bold}.in-completo{color:#ff9800}.live-dot{height:10px;width:10px;background:#4ade80;border-radius:50%;display:inline-block;animation:blink 1s infinite;margin-right:8px}@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}.status-bar{display:flex;align-items:center;margin-bottom:20px;font-size:0.9em;color:#666}@media(max-width:600px){table{font-size:0.9em}th,td{padding:8px}}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f0f2f5; margin: 0; }
+        .dashboard { background: white; padding: 30px; border-radius: 15px; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        h1 { color: #1a73e8; margin: 0; font-size: 1.8em; }
+        .subtitle { color: #5f6368; font-size: 1.1em; margin-top: 5px; }
+        .status-bar { display: flex; align-items: center; gap: 10px; font-size: 0.9em; color: #0f9d58; font-weight: bold; background: #e6f4ea; padding: 8px 15px; border-radius: 20px; }
+        .live-dot { height: 10px; width: 10px; background: #0f9d58; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
+        
+        /* Stats Cards */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3); }
+        .stat-card h3 { font-size: 2.5em; margin: 0 0 5px 0; }
+        .stat-card p { opacity: 0.9; margin: 0; font-size: 1em; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #5f6368; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+        tr:hover { background: #f8f9fa; }
+        .tag { padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; display: inline-block; }
+        .tag-start { background: #e3f2fd; color: #1976d2; }
+        .tag-correct { background: #e6f4ea; color: #0f9d58; }
+        .tag-complete { background: #fce8e6; color: #c5221f; }
+        .progress-bar-bg { background: #eee; height: 6px; border-radius: 3px; width: 100px; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        .progress-bar-fill { background: #1a73e8; height: 100%; border-radius: 3px; }
+        
+        @media (max-width: 600px) { table { font-size: 0.85em; } th, td { padding: 10px; } }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <h1>📊 Dashboard Docente - Monitoraggio Live</h1>
-        <div class="status-bar"><span class="live-dot"></span>Connessione Firebase attiva | Aggiornamento in tempo reale</div>
+        <header>
+            <div>
+                <h1>📊 Dashboard Docente</h1>
+                <div class="subtitle">Monitoraggio in tempo reale - Caccia al Tesoro Biblica</div>
+            </div>
+            <div class="status-bar"><span class="live-dot"></span> CONNESSO</div>
+        </header>
+        
         <div class="stats">
             <div class="stat-card"><h3 id="totalTeams">0</h3><p>Squadre Attive</p></div>
             <div class="stat-card"><h3 id="completed">0</h3><p>Hanno Completato</p></div>
             <div class="stat-card"><h3 id="inProgress">0</h3><p>In Corso</p></div>
             <div class="stat-card"><h3 id="avgCorrect">0/9</h3><p>Media Risposte Corrette</p></div>
         </div>
-        <table id="dataTable"><thead><tr><th>Ora</th><th>Squadra</th><th>Azione</th><th>Dettaglio</th><th>Progresso</th></tr></thead><tbody id="tableBody"></tbody></table>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Orario</th>
+                    <th>Squadra</th>
+                    <th>Azione</th>
+                    <th>Dettaglio</th>
+                    <th>Progresso</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- I dati verranno inseriti qui da Firebase -->
+            </tbody>
+        </table>
     </div>
+
     <script>
+        // ✅ CONFIGURAZIONE FIREBASE AGGIORNATA (EUCOPE-WEST1)
         const firebaseConfig = {
             apiKey: "AIzaSyDYP-ylPtgkLAOreahgQZhG8VKuhpkp4Ro",
             authDomain: "caccia-al-tesoro---2-gruppo.firebaseapp.com",
@@ -30,35 +80,71 @@
             storageBucket: "caccia-al-tesoro---2-gruppo.firebasestorage.app",
             messagingSenderId: "690362723053",
             appId: "1:690362723053:web:e46ea14fa18daf44957ae4",
-            databaseURL: "https://caccia-al-tesoro---2-gruppo-default-rtdb.firebaseio.com"
+            databaseURL: "https://caccia-al-tesoro---2-gruppo-default-rtdb.europe-west1.firebasedatabase.app"
         };
+
+        // Inizializza Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const eventsRef = db.ref('classroom/events');
 
-        function updateDashboard(snapshot){
+        // Funzione principale che si aggiorna in tempo reale
+        function updateDashboard(snapshot) {
             const data = snapshot.val();
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            if(!data){document.getElementById('totalTeams').textContent='0';document.getElementById('completed').textContent='0';document.getElementById('inProgress').textContent='0';document.getElementById('avgCorrect').textContent='0/9';return}
-            const events = Object.values(data).sort((a,b)=>a.timestamp-b.timestamp);
-            const teams = new Set(events.map(e=>e.teamName));
-            const completedTeams = new Set(events.filter(e=>e.tipo==='completato').map(e=>e.teamName));
-            let totalCorrect=0,countWithCorrect=0;
-            events.slice().reverse().forEach(e=>{
-                const date = new Date(e.timestamp).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-                const isCompleted = e.tipo==='completato';
-                totalCorrect += e.totalCorrect||0; countWithCorrect++;
+
+            if (!data) {
+                document.getElementById('totalTeams').textContent = '0';
+                document.getElementById('completed').textContent = '0';
+                document.getElementById('inProgress').textContent = '0';
+                document.getElementById('avgCorrect').textContent = '0/9';
+                return;
+            }
+
+            const events = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+            const teams = new Set(events.map(e => e.teamName));
+            const completedTeams = new Set(events.filter(e => e.tipo === 'completato').map(e => e.teamName));
+            
+            let totalCorrect = 0;
+            let countWithCorrect = 0;
+
+            // Ordina inverso per vedere gli ultimi eventi in alto
+            events.slice().reverse().forEach(e => {
+                const date = new Date(e.timestamp).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                const isCompleted = e.tipo === 'completato';
+                totalCorrect += e.totalCorrect || 0;
+                countWithCorrect++;
+
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${date}</td><td><strong>${e.teamName}</strong></td><td>${e.tipo==='inizio'?'🚀 Inizio':e.tipo==='completato'?'🎉 Completato':'✅ Risposta corretta'}</td><td>${e.dettaglio||'-'}</td><td class="${isCompleted?'completato':'in-completo'}">${e.totalCorrect||0}/9</td>`;
+                
+                // Stile tag azione
+                let tagClass = 'tag-start';
+                let azioneTesto = '🚀 Inizio';
+                if (e.tipo === 'risposta_corretta') { tagClass = 'tag-correct'; azioneTesto = '✅ Risposta Corretta'; }
+                if (e.tipo === 'completato') { tagClass = 'tag-complete'; azioneTesto = '🎉 Completato!'; }
+
+                row.innerHTML = `
+                    <td>${date}</td>
+                    <td><strong>${e.teamName}</strong></td>
+                    <td><span class="tag ${tagClass}">${azioneTesto}</span></td>
+                    <td>${e.dettaglio || '-'}</td>
+                    <td>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${((e.totalCorrect || 0)/9)*100}%"></div></div>
+                        <strong>${e.totalCorrect || 0}/9</strong>
+                    </td>
+                `;
                 tbody.appendChild(row);
             });
-            const avg = countWithCorrect>0 ? (totalCorrect/countWithCorrect).toFixed(1):0;
+
+            const avg = countWithCorrect > 0 ? (totalCorrect / countWithCorrect).toFixed(1) : 0;
             document.getElementById('totalTeams').textContent = teams.size;
             document.getElementById('completed').textContent = completedTeams.size;
             document.getElementById('inProgress').textContent = teams.size - completedTeams.size;
             document.getElementById('avgCorrect').textContent = `${avg}/9`;
         }
+
+        // Ascoltatore Live
         eventsRef.on('value', updateDashboard);
     </script>
 </body>
