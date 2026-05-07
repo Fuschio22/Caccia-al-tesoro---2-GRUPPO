@@ -7,62 +7,38 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; }
         h1 { text-align: center; font-size: 1.9em; margin: 0 0 30px 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: #1a237e; }
-        
         .stats { display: flex; gap: 15px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; min-width: 160px; flex: 1; }
         .stat-card h3 { margin: 0; font-size: 2.2em; color: #2e7d32; font-weight: 700; }
         .stat-card p { margin: 8px 0 0; color: #666; font-size: 0.95em; font-weight: 500; }
-        
-        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
-        .btn-clear:hover { background: #c62828; }
-        
+        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; }
         .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #1a237e; color: white; padding: 16px 15px; text-align: left; font-weight: 600; font-size: 0.95em; letter-spacing: 0.5px; }
+        th { background: #1a237e; color: white; padding: 16px 15px; text-align: left; font-weight: 600; }
         td { padding: 14px 15px; border-bottom: 1px solid #f0f0f0; font-size: 0.95em; }
-        tr:last-child td { border-bottom: none; }
         tr:hover td { background: #fafafa; }
-        
-        .correct { color: #2e7d32; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-        .wrong { color: #c62828; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-        .start-game { color: #1976d2; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-        .answer-cell { background: #f5f5f5; padding: 6px 12px; border-radius: 8px; display: inline-block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; font-size: 0.9em; color: #444; }
-        
-        @media (max-width: 768px) { 
-            .stats { flex-direction: column; } 
-            .stat-card { min-width: 100%; }
-            table { font-size: 0.85em; }
-            th, td { padding: 10px; }
-        }
+        .correct { color: #2e7d32; font-weight: 600; }
+        .wrong { color: #c62828; font-weight: 600; }
+        .start { color: #1976d2; font-weight: 600; font-style: italic; }
+        .answer-cell { background: #f5f5f5; padding: 6px 12px; border-radius: 8px; display: inline-block; font-family: monospace; font-size: 0.9em; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Dashboard Docente</h1>
-        
         <div class="stats">
             <div class="stat-card"><h3 id="totalAnswers">0</h3><p>Risposte totali</p></div>
             <div class="stat-card"><h3 id="correctAnswers">0</h3><p>Corrette</p></div>
             <div class="stat-card"><h3 id="wrongAnswers">0</h3><p>Sbagliate</p></div>
             <div class="stat-card"><h3 id="activeStudents">0</h3><p>Studenti attivi</p></div>
         </div>
-
         <button class="btn-clear" onclick="clearData()">🗑️ Svuota tutto</button>
-
         <div class="table-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Studente</th>
-                        <th>Domanda</th>
-                        <th>Risposta data</th>
-                        <th>Esito</th>
-                        <th>Ora</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Studente</th><th>Domanda</th><th>Risposta data</th><th>Esito</th><th>Ora</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -78,94 +54,51 @@
             appId: "1:690362723053:web:e46ea14fa18daf44957ae4",
             databaseURL: "https://caccia-al-tesoro---2-gruppo-default-rtdb.europe-west1.firebasedatabase.app"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         const questionMap = {
-            'stage1q1': 'Chi è l\'angelo?',
-            'stage1q2': 'Cosa annuncia a Maria?',
-            'stage1q3': 'Qual è la risposta di Maria?',
-            'stage2q1': 'Dove si trova Zaccheo?',
-            'stage2q2': 'Cosa fa Gesù quando lo vede?',
-            'stage2q3': 'Cosa cambia nella vita di Zaccheo?',
-            'stage3q1': 'Quanti apostoli ci sono?',
-            'stage3q2': 'Chi c\'è al centro?',
-            'stage3q3': 'Cosa ci lascia Gesù?'
+            'stage1q1': 'Chi è l\'angelo?', 'stage1q2': 'Cosa annuncia a Maria?', 'stage1q3': 'Qual è la risposta di Maria?',
+            'stage2q1': 'Dove si trova Zaccheo?', 'stage2q2': 'Cosa fa Gesù quando lo vede?', 'stage2q3': 'Cosa cambia nella vita di Zaccheo?',
+            'stage3q1': 'Quanti apostoli ci sono?', 'stage3q2': 'Chi c\'è al centro?', 'stage3q3': 'Cosa ci lascia Gesù?'
         };
 
         function clearData() {
-            if (confirm("⚠️ Sei sicuro di voler cancellare TUTTI i dati?")) {
-                db.ref('classroom').remove()
-                    .then(() => alert("✅ Dati puliti! Pronti per la prossima partita."))
-                    .catch(err => alert("Errore: " + err.message));
-            }
+            if (confirm("⚠️ Sei sicuro?")) { db.ref('classroom').remove().then(() => alert("Dati puliti!")); }
         }
 
-        function pulisciRisposta(t) {
-            if (!t || t === '-') return '-';
-            return t.replace(/["'()\[\]{}]/g, '').trim();
-        }
+        function pulisciRisposta(t) { return t && t !== '-' ? t.replace(/["'()\[\]{}]/g, '').trim() : '-'; }
 
         db.ref('classroom/events').on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-
-            if (!data) {
-                document.getElementById('totalAnswers').textContent = '0';
-                document.getElementById('correctAnswers').textContent = '0';
-                document.getElementById('wrongAnswers').textContent = '0';
-                document.getElementById('activeStudents').textContent = '0';
-                return;
-            }
+            if (!data) { document.getElementById('totalAnswers').textContent = '0'; document.getElementById('activeStudents').textContent = '0'; return; }
 
             const events = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
             const teams = new Set(events.map(e => e.teamName));
             let correct = 0, wrong = 0;
 
             events.forEach(e => {
-                // Conta solo risposte corrette e sbagliate
                 if (e.tipo === 'risposta_corretta') correct++;
                 else if (e.tipo === 'risposta_sbagliata') wrong++;
 
-                const row = document.createElement('tr');
-                
-                // ✅ GESTIONE DEI TRE TIPI DI EVENTO
+                // ✅ LOGICA DEFINITIVA DI VISUALIZZAZIONE
                 if (e.tipo === 'inizio') {
-                    // Mostra inizio gioco
-                    row.innerHTML = `
-                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
-                        <td colspan="2" style="color: #1976d2; font-style: italic;">🚀 Ha iniziato a giocare</td>
-                        <td><span class="start-game">▶️ Inizio</span></td>
-                        <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
-                    `;
-                } else if (e.tipo === 'risposta_corretta' || e.tipo === 'risposta_sbagliata') {
-                    // Mostra risposta
+                    // RIGA SPECIALE PER L'INIZIO
+                    tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td colspan="3" class="start">🚀 Ha iniziato a giocare</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
+                } 
+                else if (e.tipo === 'risposta_corretta' || e.tipo === 'risposta_sbagliata') {
+                    // RIGA STANDARD PER LE RISPOSTE
                     const domanda = questionMap[e.dettaglio] || e.dettaglio;
                     const risposta = pulisciRisposta(e.risposta);
-                    const esitoHTML = e.tipo === 'risposta_corretta' 
-                        ? '<span class="correct">✅ Corretta</span>' 
-                        : '<span class="wrong">❌ Errata</span>';
-                    
-                    row.innerHTML = `
-                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
-                        <td>${domanda}</td>
-                        <td><span class="answer-cell">${risposta}</span></td>
-                        <td>${esitoHTML}</td>
-                        <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
-                    `;
-                } else if (e.tipo === 'completato') {
-                    // Mostra completamento
-                    row.innerHTML = `
-                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
-                        <td colspan="2" style="color: #2e7d32; font-weight: bold;">🎉 HA COMPLETATO IL GIOCO!</td>
-                        <td><span class="correct">🏆 Vittoria</span></td>
-                        <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
-                    `;
+                    const esito = e.tipo === 'risposta_corretta' ? '<span class="correct">✅ Corretta</span>' : '<span class="wrong">❌ Errata</span>';
+                    tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td>${domanda}</td><td><span class="answer-cell">${risposta}</span></td><td>${esito}</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
                 }
-
-                tbody.appendChild(row);
+                else if (e.tipo === 'completato') {
+                    // RIGA PER COMPLETAMENTO
+                    tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td colspan="3" class="correct">🎉 HA COMPLETATO IL GIOCO!</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
+                }
             });
 
             document.getElementById('totalAnswers').textContent = correct + wrong;
