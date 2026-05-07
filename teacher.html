@@ -102,7 +102,8 @@
         }
 
         function pulisciRisposta(t) {
-            return t ? t.replace(/["'()\[\]{}]/g, '').trim() : '-';
+            if (!t || t === '-') return '-';
+            return t.replace(/["'()\[\]{}]/g, '').trim();
         }
 
         db.ref('classroom/events').on('value', snap => {
@@ -123,18 +124,18 @@
             let correct = 0, wrong = 0;
 
             events.forEach(e => {
-                // Conta solo le risposte (corrette o sbagliate)
+                // Conta solo risposte corrette e sbagliate
                 if (e.tipo === 'risposta_corretta') correct++;
                 else if (e.tipo === 'risposta_sbagliata') wrong++;
 
-                // ✅ MOSTRA SOLO LE RISPOSTE (salta 'inizio' e 'completato')
+                // Mostra solo le risposte (salta 'inizio' e 'completato')
                 if (e.tipo !== 'risposta_corretta' && e.tipo !== 'risposta_sbagliata') {
-                    return; // Salta questa riga nella tabella
+                    return;
                 }
 
                 const domanda = questionMap[e.dettaglio] || e.dettaglio;
+                const risposta = pulisciRisposta(e.risposta);
                 
-                // ✅ LOGICA CORRETTA PER L'ESITO
                 let esitoHTML = '';
                 if (e.tipo === 'risposta_corretta') {
                     esitoHTML = '<span class="correct">✅ Corretta</span>';
@@ -144,9 +145,9 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${e.teamName}</strong></td>
+                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
                         <td>${domanda}</td>
-                        <td><span class="answer-cell">${pulisciRisposta(e.risposta)}</span></td>
+                        <td><span class="answer-cell">${risposta}</span></td>
                         <td>${esitoHTML}</td>
                         <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
                     </tr>`;
