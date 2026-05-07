@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caccia al Tesoro Biblica</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2a5298">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; }
+        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 30px; text-align: center; position: relative; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        header p { font-size: 1.2em; opacity: 0.9; }
+        .audio-controls { position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; }
+        .audio-btn { background: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 1.2em; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .audio-btn:hover { transform: scale(1.1); }
+        .audio-btn.playing { background: #4ade80; }
+        .volume-control { display: flex; align-items: center; gap: 5px; color: white; font-size: 0.9em; }
+        .volume-control input { width: 80px; cursor: pointer; }
+        .stage { padding: 30px; border-bottom: 2px solid #f0f0f0; display: none; }
+        .stage.active { display: block; animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .stage-header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px 25px; border-radius: 10px; margin-bottom: 25px; text-align: center; }
+        .stage-header h2 { font-size: 1.8em; margin-bottom: 5px; }
+        .progress-counter { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.95em; margin-top: 10px; display: inline-block; }
+        .question-box { background: #f8f9fa; border-left: 5px solid #2a5298; padding: 20px; margin-bottom: 25px; border-radius: 5px; position: relative; }
+        .question-box h3 { color: #2a5298; margin-bottom: 15px; font-size: 1.3em; }
+        .question-complete { position: absolute; top: 15px; right: 15px; font-size: 1.5em; color: #28a745; font-weight: bold; display: none; }
+        .question-box.completed .question-complete { display: block; }
+        .answer-container { background: white; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0; transition: all 0.3s ease; }
+        .answer-container.correct { background: #d4edda; border-color: #28a745; }
+        .answer-container.wrong { background: #f8d7da; border-color: #dc3545; }
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .input-group input { flex: 1; padding: 12px; font-size: 1em; border: 2px solid #ddd; border-radius: 6px; transition: border-color 0.3s ease; }
+        .input-group input:focus { outline: none; border-color: #667eea; }
+        .input-group input:disabled { background: #e9ecef; cursor: not-allowed; }
+        .btn { padding: 12px 24px; font-size: 1em; border-radius: 25px; cursor: pointer; border: none; color: white; transition: all 0.3s ease; font-weight: bold; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn-check { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .btn-retry { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333; }
+        .btn-next { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .btn-prev { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+        .btn-start { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; font-size: 1.2em; }
+        .feedback { margin-top: 8px; padding: 8px; border-radius: 5px; font-size: 0.95em; display: none; }
+        .feedback.show { display: block; }
+        .feedback.success { background: #d4edda; color: #155724; }
+        .feedback.error { background: #f8d7da; color: #721c24; }
+        .biblical-text { background: #fff8dc; border: 2px solid #daa520; padding: 20px; margin: 20px 0; border-radius: 10px; font-style: italic; line-height: 1.8; position: relative; }
+        .biblical-text::before { content: "📖"; position: absolute; top: -15px; left: 20px; background: #fff8dc; padding: 0 10px; font-size: 1.5em; }
+        .biblical-text h4 { color: #8b4513; margin-bottom: 10px; font-style: normal; }
+        .clue-box { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .clue-box::before { content: "💡 INDIZIO: "; font-size: 1.2em; }
+        .progress-bar { background: #e0e0e0; height: 10px; margin: 20px 30px; border-radius: 5px; overflow: hidden; }
+        .progress { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.5s ease; }
+        .welcome-screen, .final-screen { text-align: center; padding: 50px 30px; }
+        .welcome-screen h2, .final-screen h2 { color: #2a5298; font-size: 2em; margin-bottom: 20px; }
+        .welcome-screen p, .final-screen p { font-size: 1.2em; line-height: 1.8; color: #555; margin-bottom: 30px; }
+        .stages-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+        .stage-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; position: relative; }
+        .stage-card h3 { font-size: 1.5em; margin-bottom: 10px; }
+        .stage-number { font-size: 3em; opacity: 0.3; position: absolute; top: 10px; right: 15px; }
+        .nav-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; text-align: center; animation: modalPop 0.3s ease; }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h3 { color: #2a5298; margin-bottom: 15px; }
+        .modal p { margin-bottom: 20px; line-height: 1.6; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        @media (max-width: 600px) { header h1 { font-size: 1.8em; } .stage { padding: 20px; } .audio-controls { position: relative; top: auto; right: auto; margin: 10px auto; } .input-group { flex-direction: column; } .nav-buttons { flex-direction: column; } .modal-content { margin: 20px; } }
+    </style>
+</head>
+<body>
+    <audio id="bgMusic" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg"></audio>
+    <audio id="soundCorrect" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="soundWrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+    <audio id="soundStage" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+    <audio id="soundWin" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+
+    <div class="container">
+        <header>
+            <h1>📚 Caccia al Tesoro Biblica</h1>
+            <p id="headerSubtitle">Un viaggio attraverso il Vangelo</p>
+            <div class="progress-counter" id="progressCounter">0/9 risposte corrette</div>
+            <div class="audio-controls">
+                <button class="audio-btn" id="musicToggle" onclick="toggleMusic()" title="Play/Pausa musica">🔇</button>
+                <div class="volume-control">
+                    <span>🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" onchange="changeVolume(this.value)">
+                </div>
+            </div>
+        </header>
+
+        <div class="progress-bar"><div class="progress" id="progressBar"></div></div>
+
+        <!-- REGISTRAZIONE SQUADRA -->
+        <div class="stage active" id="registration">
+            <div class="welcome-screen">
+                <h2>📝 Registra la tua Squadra</h2>
+                <p>Inserite il nome del vostro gruppo per iniziare la caccia al tesoro!</p>
+                <div class="answer-container" style="max-width: 400px; margin: 0 auto; background: #f8f9fa;">
+                    <div class="input-group">
+                        <input type="text" id="teamNameInput" placeholder="Nome della squadra...">
+                        <button class="btn btn-start" onclick="registerTeam()">Inizia ▶️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WELCOME -->
+        <div class="stage" id="welcome">
+            <div class="welcome-screen">
+                <h2>Benvenuti, <span id="displayTeamName" style="color:#f093fb;"></span>!</h2>
+                <p>Preparatevi a scoprire tre momenti speciali del Vangelo.</p>
+                <div class="stages-overview">
+                    <div class="stage-card"><div class="stage-number"></div><h3>L'Annunciazione</h3><p>3 domande</p></div>
+                    <div class="stage-card"><div class="stage-number"></div><h3>Zaccheo</h3><p>3 domande</p></div>
+                    <div class="stage-card"><div class="stage-number"></div><h3>L'Ultima Cena</h3><p>3 domande</p></div>
+                </div>
+                <button class="btn btn-start" onclick="startGame()">🚀 Inizia il Gioco</button>
+            </div>
+        </div>
+
+        <!-- TAPPA 1 -->
+        <div class="stage" id="stage1">
+            <div class="stage-header"><h2>Tappa 1: L'Annunciazione - Osserva l'immagine sulla Lim</h2><p>Luca 1:26-45</p></div>
+            <div class="question-box" id="qbox-stage1q1"><span class="question-complete">✔️</span><h3>1. Chi è l'angelo?</h3><div class="answer-container" id="container-stage1q1"><div class="input-group"><input type="text" id="stage1q1" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage1q1', ['gabriel', 'gabriele'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage1q1')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage1q1"></div></div></div>
+            <div class="question-box" id="qbox-stage1q2"><span class="question-complete">✔️</span><h3>2. Cosa annuncia a Maria?</h3><div class="answer-container" id="container-stage1q2"><div class="input-group"><input type="text" id="stage1q2" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage1q2', ['avrà un figlio', 'avrà un bambino', 'aspetta un figlio', 'aspetta un bambino'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage1q2')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage1q2"></div></div></div>
+            <div class="biblical-text"><h4>Brano da leggere:</h4><p>26 Nel sesto mese, l'angelo Gabriele fu mandato da Dio in una città della Galilea, chiamata Nazaret, 27 ad una vergine fidanzata a un uomo di nome Giuseppe, della casa di Davide; e il nome della vergine era Maria. 28 E l'angelo, entrato da lei, disse: «Salve, o grandemente favorita, il Signore è con te; tu sei benedetta fra le donne». 29 Ma quando lo vide, ella rimase turbata alle sue parole, e si domandava cosa potesse significare un tale saluto. 30 E l'angelo le disse: «Non temere, Maria, perché hai trovato grazia presso Dio. 31 Ed ecco, tu concepirai nel grembo e partorirai un figlio, e gli porrai nome Gesù. 32 Egli sarà grande e sarà chiamato Figlio dell'Altissimo; e il Signore Dio gli darà il trono di Davide, suo padre; 33 e regnerà sulla casa di Giacobbe in eterno, e il suo regno non avrà mai fine». 34 E Maria disse all'angelo: «Come avverrà questo, poiché io non conosco uomo?». 35 E l'angelo, rispondendo, le disse: «Lo Spirito Santo verrà su di te e la potenza dell'Altissimo ti adombrerà; pertanto il santo che nascerà da te sarà chiamato Figlio di Dio. 36 Ed ecco Elisabetta, tua parente, ha anch'ella concepito un figlio nella sua vecchiaia; e questo è il sesto mese per lei, che era chiamata sterile, 37 poiché nulla è impossibile con Dio». 38 Allora Maria disse: «Ecco la serva del Signore; mi sia fatto secondo la tua parola». E l'angelo si allontanò da lei.</p></div>
+            <div class="clue-box">Nelle 30 settimane + 8 troverai la risposta. Esatta come la vedi.</div>
+            <div class="question-box" id="qbox-stage1q3"><span class="question-complete">✔️</span><h3>3. Qual è la risposta di Maria?</h3><div class="answer-container" id="container-stage1q3"><div class="input-group"><input type="text" id="stage1q3" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage1q3', ['ecco la serva del signore; mi sia fatto secondo la tua parola'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage1q3')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage1q3"></div></div></div>
+            <div class="nav-buttons"><button class="btn btn-next" onclick="nextStage(2)">Vai alla Tappa 2 ➡️</button></div>
+        </div>
+
+        <!-- TAPPA 2 -->
+        <div class="stage" id="stage2">
+            <div class="stage-header"><h2>Tappa 2: Zaccheo - Osserva l'immagine sulla Lim</h2><p>Luca 19:1-10</p></div>
+            <div class="question-box" id="qbox-stage2q1"><span class="question-complete">✔️</span><h3>1. Dove si trova Zaccheo?</h3><div class="answer-container" id="container-stage2q1"><div class="input-group"><input type="text" id="stage2q1" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q1', ['su un albero', 'sull\'albero'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q1')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q1"></div></div></div>
+            <div class="question-box" id="qbox-stage2q2"><span class="question-complete">✔️</span><h3>2. Cosa fa Gesù quando lo vede?</h3><div class="answer-container" id="container-stage2q2"><div class="input-group"><input type="text" id="stage2q2" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q2', ['lo chiama per nome e gli dice di scendere subito', 'lo chiama per nome', 'gli dice di scendere', 'gli chiede di scendere'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q2')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q2"></div></div></div>
+            <div class="biblical-text"><h4>Brano da leggere:</h4><p>1 Entrato in Gerico, attraversava la città. 2 Ed ecco un uomo di nome Zaccheo, capo dei pubblicani e ricco, 3 cercava di vedere quale fosse Gesù, ma non gli riusciva a causa della folla, poiché era piccolo di statura. 4 Allora corse avanti e, per poterlo vedere, salì su un sicomoro, poiché doveva passare di là. 5 Quando giunse sul luogo, Gesù alzò lo sguardo e gli disse: «Zaccheo, scendi subito, perché oggi devo fermarmi a casa tua». 6 In fretta scese e lo accolse pieno di gioia. 7 Vedendo ciò, tutti mormoravano: «È andato ad alloggiare da un peccatore!». 8 Ma Zaccheo, alzatosi, disse al Signore: «Ecco, Signore, io do (restituisce) la metà dei miei (suoi) beni ai poveri; e se ho frodato qualcuno, restituisco quattro volte tanto». 9 Gesù gli rispose: «Oggi la salvezza è entrata in questa casa».</p></div>
+            <div class="clue-box">Ciò che cerchi lo troverai all'infinito, ma coricato. Usa le parentesi.</div>
+            <div class="question-box" id="qbox-stage2q3"><span class="question-complete">✔️</span><h3>3. Cosa cambia nella vita di Zaccheo?</h3><div class="answer-container" id="container-stage2q3"><div class="input-group"><input type="text" id="stage2q3" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q3', ['restituisce la metà dei suoi beni ai poveri'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q3')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q3"></div></div></div>
+            <div class="nav-buttons"><button class="btn btn-prev" onclick="prevStage(1)">⬅️ Tappa 1</button><button class="btn btn-next" onclick="nextStage(3)">Vai alla Tappa 3 ➡️</button></div>
+        </div>
+
+        <!-- TAPPA 3 -->
+        <div class="stage" id="stage3">
+            <div class="stage-header"><h2>Tappa 3: L'Ultima Cena - Osserva l'immagine sulla Lim</h2><p>Luca 22:14-22</p></div>
+            <div style="text-align: center; margin: 20px 0; padding: 20px; background: #f0f0f0; border-radius: 10px;"><p style="font-size: 1.2em; color: #555;"><strong>🖼️ IMMAGINE ALLA LIM:</strong><br>Ultima Cena</p></div>
+            <div class="question-box" id="qbox-stage3q1"><span class="question-complete">✔️</span><h3>1. Quanti apostoli ci sono?</h3><div class="answer-container" id="container-stage3q1"><div class="input-group"><input type="text" id="stage3q1" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage3q1', ['12', 'dodici'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage3q1')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage3q1"></div></div></div>
+            <div class="question-box" id="qbox-stage3q2"><span class="question-complete">✔️</span><h3>2. Chi c'è al centro?</h3><div class="answer-container" id="container-stage3q2"><div class="input-group"><input type="text" id="stage3q2" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage3q2', ['gesù', 'gesu'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage3q2')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage3q2"></div></div></div>
+            <div class="biblical-text"><h4>Brano da leggere:</h4><p>14 Quando fu l'ora, prese posto a tavola e gli apostoli con lui, 15 e disse: «Ho desiderato ardentemente di mangiare questa Pasqua con voi, prima della mia passione, 16 poiché vi dico: non la mangerò più, finché essa non si compia nel regno di Dio». 17 E preso un calice, rese grazie e disse: «Prendetelo e distribuitelo tra voi, 18 poiché vi dico: da questo momento non berrò più del frutto della vite, finché non venga il regno di Dio».
+19 Poi, preso un pane, rese grazie, lo spezzò e lo diede loro dicendo: «Questo è il mio corpo che è dato per voi; fate questo in memoria di me». 20 Allo stesso modo dopo aver cenato, prese il calice dicendo: «Questo calice è la nuova alleanza nel mio sangue, che viene versato per voi (eucarestia)».
+21 «Ma ecco, la mano di chi mi tradisce è con me, sulla tavola. 22 Il Figlio dell'uomo se ne va, secondo quanto è stabilito; ma guai a quell'uomo dal quale è tradito!». 23 Allora essi cominciarono a domandarsi a vicenda chi di essi avrebbe fatto ciò.
+24 Sorse anche una discussione, chi di loro poteva esser considerato il più grande. 25 Egli disse: «I re delle nazioni le governano, e coloro che hanno il potere su di esse si fanno chiamare benefattori. 26 Per voi però non sia così; ma chi è il più grande tra voi diventi come il più piccolo e chi governa come colui che serve. 27 Infatti chi è più grande, chi sta a tavola o chi serve? Non è forse colui che sta a tavola? Eppure io sto in mezzo a voi come colui che serve.
+28 Voi siete quelli che avete perseverato con me nelle mie prove;</p></div>
+            <div class="clue-box">Il massimo dei voti ad un esame universitario meno dieci. Lì troverai la risposta.</div>
+            <div class="question-box" id="qbox-stage3q3"><span class="question-complete">✔️</span><h3>3. Cosa ci lascia Gesù?</h3><div class="answer-container" id="container-stage3q3"><div class="input-group"><input type="text" id="stage3q3" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage3q3', ['l\'eucarestia', 'eucarestia'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage3q3')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage3q3"></div></div></div>
+            <div class="nav-buttons"><button class="btn btn-prev" onclick="prevStage(2)">⬅️ Tappa 2</button><button class="btn btn-next" onclick="tryToFinish()">🎉 Completa il Viaggio</button></div>
+        </div>
+
+        <!-- FINAL -->
+        <div class="stage" id="final">
+            <div class="final-screen">
+                <h2>🎉 Complimenti, <span id="finalTeamName" style="color:#28a745;"></span>!</h2>
+                <p>Avete completato la Caccia al Tesoro Biblica!<br>Risposto correttamente a tutte le 9 domande!</p>
+                <div class="stages-overview">
+                    <div class="stage-card" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);"><h3>✅ L'Annunciazione</h3></div>
+                    <div class="stage-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><h3>✅ Zaccheo</h3></div>
+                    <div class="stage-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"><h3>✅ Ultima Cena</h3></div>
+                </div>
+                <button class="btn btn-start" onclick="restartGame()">🔄 Ricomincia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BLOCCO -->
+    <div class="modal" id="incompleteModal">
+        <div class="modal-content">
+            <h3>📖 Quasi ci siamo!</h3>
+            <p>Rispondete correttamente a tutte le <strong>9 domande</strong> per sbloccare il finale!</p>
+            <p id="remainingCount" style="font-weight: bold; color: #2a5298;"></p>
+            <div class="modal-buttons">
+                <button class="btn btn-prev" onclick="closeModal()">Torna a giocare</button>
+                <button class="btn btn-next" onclick="goToFirstIncomplete()">Vai alla prima domanda mancante</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ SOSTITUISCI CON IL TUO URL DI GOOGLE APPS SCRIPT
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/TUO-ID-QUI/exec';
+        
+        let teamName = '';
+        let currentStage = 0;
+        const correctAnswers = {
+            'stage1q1': false, 'stage1q2': false, 'stage1q3': false,
+            'stage2q1': false, 'stage2q2': false, 'stage2q3': false,
+            'stage3q1': false, 'stage3q2': false, 'stage3q3': false
+        };
+
+        const bgMusic = document.getElementById('bgMusic');
+        const soundCorrect = document.getElementById('soundCorrect');
+        const soundWrong = document.getElementById('soundWrong');
+        const soundStage = document.getElementById('soundStage');
+        const soundWin = document.getElementById('soundWin');
+        const musicToggle = document.getElementById('musicToggle');
+        let isMusicPlaying = false;
+
+        [bgMusic, soundCorrect, soundWrong, soundStage, soundWin].forEach(a => a.volume = 0.6);
+
+        function registerTeam() {
+            const input = document.getElementById('teamNameInput');
+            const name = input.value.trim();
+            if (name.length < 3) {
+                alert("Inserisci un nome valido per la tua squadra (minimo 3 caratteri)!");
+                return;
+            }
+            teamName = name;
+            localStorage.setItem('teamName', teamName);
+            document.getElementById('displayTeamName').textContent = teamName;
+            document.getElementById('finalTeamName').textContent = teamName;
+            document.getElementById('registration').classList.remove('active');
+            document.getElementById('welcome').classList.add('active');
+        }
+
+        function toggleMusic() {
+            isMusicPlaying ? bgMusic.pause() : bgMusic.play().catch(()=>{});
+            isMusicPlaying = !isMusicPlaying;
+            musicToggle.textContent = isMusicPlaying ? '🔊' : '🔇';
+            musicToggle.classList.toggle('playing', isMusicPlaying);
+        }
+
+        function changeVolume(v) { [bgMusic, soundCorrect, soundWrong, soundStage, soundWin].forEach(a => a.volume = parseFloat(v)); }
+        function playSound(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+
+        // NORMALIZZAZIONE STRETTA: rimuove solo spazi extra e punteggiatura standard
+        function normalizeText(text) {
+            return text.toLowerCase().trim().replace(/[.,;:!?()"'']/g, '').replace(/\s+/g, ' ');
+        }
+
+        function inviaProgresso(tipo, dettaglio) {
+            if (!GOOGLE_SCRIPT_URL.includes('TUO-ID')) {
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ teamName, tipo, dettaglio, timestamp: new Date().toISOString() })
+                }).catch(()=>{});
+            }
+        }
+
+        function updateProgressCounter() {
+            const count = Object.values(correctAnswers).filter(v => v).length;
+            document.getElementById('progressCounter').textContent = `${count}/9 risposte corrette`;
+            document.getElementById('progressBar').style.width = (count / 9) * 100 + '%';
+        }
+
+        function checkAnswer(inputId, correctAnswersList) {
+            const input = document.getElementById(inputId);
+            const feedback = document.getElementById('feedback-' + inputId);
+            const container = document.getElementById('container-' + inputId);
+            const userAnswer = normalizeText(input.value);
+
+            if (!userAnswer) {
+                showFeedback(feedback, '⚠️ Scrivi una risposta prima di verificare.', 'error');
+                return;
+            }
+
+            // CONFRONTO ESATTO: nessuna corrispondenza parziale
+            const isCorrect = correctAnswersList.some(expected => normalizeText(expected) === userAnswer);
+
+            if (isCorrect) {
+                showFeedback(feedback, '✅ Risposta esatta! Ottimo lavoro!', 'success');
+                container.className = 'answer-container correct';
+                input.disabled = true;
+                playSound(soundCorrect);
+                correctAnswers[inputId] = true;
+                updateQuestionStatus(inputId, true);
+                inviaProgresso('risposta_corretta', inputId);
+            } else {
+                showFeedback(feedback, '❌ Non esattamente. Riprova.', 'error');
+                container.className = 'answer-container wrong';
+                playSound(soundWrong);
+                correctAnswers[inputId] = false;
+                updateQuestionStatus(inputId, false);
+            }
+        }
+
+        function updateQuestionStatus(inputId, isCorrect) {
+            const qbox = document.getElementById('qbox-' + inputId);
+            if (qbox) qbox.classList.toggle('completed', isCorrect);
+            updateProgressCounter();
+        }
+
+        function retryAnswer(inputId) {
+            const input = document.getElementById(inputId);
+            const feedback = document.getElementById('feedback-' + inputId);
+            const container = document.getElementById('container-' + inputId);
+            input.value = ''; input.disabled = false; input.focus();
+            feedback.className = 'feedback'; feedback.textContent = '';
+            container.className = 'answer-container';
+            correctAnswers[inputId] = false;
+            updateQuestionStatus(inputId, false);
+        }
+
+        function showFeedback(element, message, type) {
+            element.textContent = message;
+            element.className = 'feedback show ' + type;
+        }
+
+        function startGame() {
+            bgMusic.play().then(()=>{ isMusicPlaying=true; musicToggle.textContent='🔊'; musicToggle.classList.add('playing'); }).catch(()=>{});
+            document.getElementById('welcome').classList.remove('active');
+            document.getElementById('stage1').classList.add('active');
+            currentStage = 1; playSound(soundStage);
+            inviaProgresso('inizio', teamName);
+        }
+
+        function nextStage(n) {
+            document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+            document.getElementById('stage'+n).classList.add('active');
+            currentStage = n; playSound(soundStage); window.scrollTo(0,0);
+        }
+        function prevStage(n) { nextStage(n); }
+
+        // CONTROLLO RIGOROSO PER IL FINALE
+        function tryToFinish() {
+            const allCorrect = Object.values(correctAnswers).every(v => v === true);
+            if (allCorrect) {
+                document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+                document.getElementById('final').classList.add('active');
+                playSound(soundWin);
+                inviaProgresso('completato', teamName);
+                bgMusic.pause();
+                setTimeout(() => { if(isMusicPlaying) bgMusic.play(); }, 3000);
+                window.scrollTo(0,0);
+            } else {
+                const missing = Object.values(correctAnswers).filter(v => !v).length;
+                document.getElementById('remainingCount').textContent = `Mancano ancora ${missing} risposta${missing > 1 ? ' corrette' : ' corretta'}!`;
+                document.getElementById('incompleteModal').classList.add('show');
+                playSound(soundWrong);
+            }
+        }
+
+        function closeModal() { document.getElementById('incompleteModal').classList.remove('show'); }
+
+        function goToFirstIncomplete() {
+            closeModal();
+            const questions = [
+                {id: 'stage1q1', stage: 1}, {id: 'stage1q2', stage: 1}, {id: 'stage1q3', stage: 1},
+                {id: 'stage2q1', stage: 2}, {id: 'stage2q2', stage: 2}, {id: 'stage2q3', stage: 2},
+                {id: 'stage3q1', stage: 3}, {id: 'stage3q2', stage: 3}, {id: 'stage3q3', stage: 3}
+            ];
+            for (let q of questions) {
+                if (!correctAnswers[q.id]) {
+                    nextStage(q.stage);
+                    setTimeout(() => {
+                        const input = document.getElementById(q.id);
+                        if (input) { input.focus(); input.scrollIntoView({behavior: 'smooth', block: 'center'}); }
+                    }, 300);
+                    break;
+                }
+            }
+        }
+
+        function restartGame() {
+            for (let key in correctAnswers) { correctAnswers[key] = false; }
+            document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+            document.getElementById('registration').classList.add('active');
+            document.getElementById('teamNameInput').value = '';
+            document.querySelectorAll('input[type="text"]').forEach(input => { input.value = ''; input.disabled = false; });
+            document.querySelectorAll('.answer-container').forEach(c => c.className = 'answer-container');
+            document.querySelectorAll('.question-box').forEach(q => q.classList.remove('completed'));
+            document.querySelectorAll('.feedback').forEach(f => { f.className = 'feedback'; f.textContent = ''; });
+            currentStage = 0; updateProgressCounter();
+            if (isMusicPlaying) bgMusic.play().catch(()=>{});
+            window.scrollTo(0,0);
+        }
+
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const activeInput = document.activeElement;
+                if (activeInput && activeInput.tagName === 'INPUT' && activeInput.type === 'text') {
+                    const container = activeInput.closest('.answer-container');
+                    const checkBtn = container.querySelector('.btn-check');
+                    if (checkBtn) checkBtn.click();
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.input-group input[type="text"]').forEach(input => {
+                input.addEventListener('input', function() {
+                    const feedback = document.getElementById('feedback-' + this.id);
+                    const container = document.getElementById('container-' + this.id);
+                    if (feedback) { feedback.className = 'feedback'; feedback.textContent = ''; }
+                    if (container) { container.classList.remove('wrong'); }
+                });
+            });
+            updateProgressCounter();
+        });
+
+        document.getElementById('incompleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW OK')).catch(()=>console.log('SW ERR'));
+        }
+
+        window.addEventListener('load', () => { musicToggle.textContent = '🔇'; });
+    </script>
+</body>
+</html>
