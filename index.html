@@ -23,7 +23,7 @@
     <div class="container">
         <header>
             <h1>📚 Caccia al Tesoro Biblica</h1>
-            <p>Un viaggio attraverso il Vangelo</p>
+            <p id="headerSubtitle">Un viaggio attraverso il Vangelo</p>
             <div class="progress-counter" id="progressCounter">0/9 risposte corrette</div>
             <div class="audio-controls">
                 <button class="audio-btn" id="musicToggle" onclick="toggleMusic()">🔇</button>
@@ -44,7 +44,7 @@
 
         <div class="stage" id="welcome">
             <div class="welcome-screen">
-                <h2>Benvenuti, <span id="displayTeamName"></span>!</h2>
+                <h2>Benvenuti, <span id="displayTeamName" style="color:#f093fb"></span>!</h2>
                 <p>Preparatevi a scoprire tre momenti speciali del Vangelo.</p>
                 <div class="stages-overview">
                     <div class="stage-card"><div class="stage-number"></div><h3>L'Annunciazione</h3><p>3 domande</p></div>
@@ -69,8 +69,8 @@
             <div class="stage-header"><h2>Tappa 2: Zaccheo - Osserva l'immagine sulla Lim</h2><p>Luca 19:1-10</p></div>
             <div class="question-box" id="qbox-stage2q1"><span class="question-complete">✔️</span><h3>1. Dove si trova Zaccheo?</h3><div class="answer-container" id="container-stage2q1"><div class="input-group"><input type="text" id="stage2q1" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q1',['su un albero','sull\'albero'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q1')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q1"></div></div></div>
             <div class="question-box" id="qbox-stage2q2"><span class="question-complete">✔️</span><h3>2. Cosa fa Gesù quando lo vede?</h3><div class="answer-container" id="container-stage2q2"><div class="input-group"><input type="text" id="stage2q2" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q2',['lo chiama per nome e gli dice di scendere subito','lo chiama per nome','gli dice di scendere','gli chiede di scendere'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q2')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q2"></div></div></div>
-            <div class="biblical-text"><h4>Brano da leggere:</h4><p>1 Entrato in Gerico, attraversava la città. 2 Ed ecco un uomo di nome Zaccheo, capo dei pubblicani e ricco, 3 cercava di vedere quale fosse Gesù, ma non gli riusciva a causa della folla, poiché era piccolo di statura. 4 Allora corse avanti e, per poterlo vedere, salì su un sicomoro, poiché doveva passare di là. 5 Quando giunse sul luogo, Gesù alzò lo sguardo e gli disse: «Zaccheo, scendi subito, perché oggi devo fermarmi a casa tua». 6 In fretta scese e lo accolse pieno di gioia. 7 Vedendo ciò, tutti mormoravano: «È andato ad alloggiare da un peccatore!». 8 Ma Zaccheo, alzatosi, disse al Signore: «Ecco, Signore, io do (restituisce) la metà dei (suoi) miei beni ai poveri; e se ho frodato qualcuno, restituisco quattro volte tanto». 9 Gesù gli rispose: «Oggi la salvezza è entrata in questa casa».</p></div>
-            <div class="clue-box">Ciò che cerchi lo troverai all'infinito, ma coricato. Scegli le parentesi.</div>
+            <div class="biblical-text"><h4>Brano da leggere:</h4><p>1 Entrato in Gerico, attraversava la città. 2 Ed ecco un uomo di nome Zaccheo, capo dei pubblicani e ricco, 3 cercava di vedere quale fosse Gesù, ma non gli riusciva a causa della folla, poiché era piccolo di statura. 4 Allora corse avanti e, per poterlo vedere, salì su un sicomoro, poiché doveva passare di là. 5 Quando giunse sul luogo, Gesù alzò lo sguardo e gli disse: «Zaccheo, scendi subito, perché oggi devo fermarmi a casa tua». 6 In fretta scese e lo accolse pieno di gioia. 7 Vedendo ciò, tutti mormoravano: «È andato ad alloggiare da un peccatore!». 8 Ma Zaccheo, alzatosi, disse al Signore: «Ecco, Signore, io do la metà dei miei beni ai poveri; e se ho frodato qualcuno, restituisco quattro volte tanto». 9 Gesù gli rispose: «Oggi la salvezza è entrata in questa casa».</p></div>
+            <div class="clue-box">Ciò che cerchi lo troverai all'infinito, ma coricato. Usa le parentesi.</div>
             <div class="question-box" id="qbox-stage2q3"><span class="question-complete">✔️</span><h3>3. Cosa cambia nella vita di Zaccheo?</h3><div class="answer-container" id="container-stage2q3"><div class="input-group"><input type="text" id="stage2q3" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage2q3',['restituisce la metà dei suoi beni ai poveri'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage2q3')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage2q3"></div></div></div>
             <div class="nav-buttons"><button class="btn btn-prev" onclick="prevStage(1)">⬅️ Tappa 1</button><button class="btn btn-next" onclick="nextStage(3)">Vai alla Tappa 3 ➡️</button></div>
         </div>
@@ -91,7 +91,7 @@
 
         <div class="stage" id="final">
             <div class="final-screen">
-                <h2>🎉 Complimenti, <span id="finalTeamName"></span>!</h2>
+                <h2>🎉 Complimenti, <span id="finalTeamName" style="color:#28a745"></span>!</h2>
                 <p>Avete completato la Caccia al Tesoro Biblica!<br>Risposto correttamente a tutte le 9 domande!</p>
                 <div class="stages-overview">
                     <div class="stage-card" style="background:linear-gradient(135deg,#56ab2f 0%,#a8e063 100%)"><h3>✅ L'Annunciazione</h3></div>
@@ -107,7 +107,7 @@
         <div class="modal-content">
             <h3>📖 Quasi ci siamo!</h3>
             <p>Rispondete correttamente a tutte le <strong>9 domande</strong> per sbloccare il finale!</p>
-            <p id="remainingCount"></p>
+            <p id="remainingCount" style="font-weight:bold;color:#2a5298"></p>
             <div class="modal-buttons"><button class="btn btn-prev" onclick="closeModal()">Torna a giocare</button><button class="btn btn-next" onclick="goToFirstIncomplete()">Vai alla prima domanda mancante</button></div>
         </div>
     </div>
@@ -168,6 +168,7 @@
                 playSound(soundCorrect);
                 correctAnswers[inputId]=true;
                 updateQuestionStatus(inputId,true);
+                // ✅ INVIA LA RISPOSTA CORRETTA
                 inviaProgresso('risposta_corretta', inputId, userAnswerRaw);
             }else{
                 showFeedback(feedback,'❌ Non esattamente. Riprova.','error');
@@ -175,6 +176,7 @@
                 playSound(soundWrong);
                 correctAnswers[inputId]=false;
                 updateQuestionStatus(inputId,false);
+                // ✅ INVIA LA RISPOSTA SBAGLIATA (FONDAMENTALE)
                 inviaProgresso('risposta_sbagliata', inputId, userAnswerRaw);
             }
         }
@@ -182,10 +184,20 @@
         function updateQuestionStatus(inputId,isCorrect){const qbox=document.getElementById('qbox-'+inputId);if(qbox)qbox.classList.toggle('completed',isCorrect);updateProgressCounter()}
         function retryAnswer(inputId){const input=document.getElementById(inputId),feedback=document.getElementById('feedback-'+inputId),container=document.getElementById('container-'+inputId);input.value='';input.disabled=false;input.focus();feedback.className='feedback';feedback.textContent='';container.className='answer-container';correctAnswers[inputId]=false;updateQuestionStatus(inputId,false)}
         function showFeedback(element,message,type){element.textContent=message;element.className='feedback show '+type}
-        function startGame(){bgMusic.play().then(()=>{isMusicPlaying=true;musicToggle.textContent='🔊';musicToggle.classList.add('playing')}).catch(()=>{});document.getElementById('welcome').classList.remove('active');document.getElementById('stage1').classList.add('active');currentStage=1;playSound(soundStage);inviaProgresso('inizio',teamName,teamName)}
+        
+        function startGame(){
+            bgMusic.play().then(()=>{isMusicPlaying=true;musicToggle.textContent='🔊';musicToggle.classList.add('playing')}).catch(()=>{});
+            document.getElementById('welcome').classList.remove('active');
+            document.getElementById('stage1').classList.add('active');
+            currentStage=1;
+            playSound(soundStage);
+            // ✅ INVIO SEGNALAZIONE INIZIO GIOCO ESPRESSA
+            inviaProgresso('inizio', 'Ha iniziato il gioco', teamName);
+        }
+
         function nextStage(n){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('stage'+n).classList.add('active');currentStage=n;playSound(soundStage);window.scrollTo(0,0)}
         function prevStage(n){nextStage(n)}
-        function tryToFinish(){const allCorrect=Object.values(correctAnswers).every(v=>v===true);if(allCorrect){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('final').classList.add('active');playSound(soundWin);inviaProgresso('completato',teamName,teamName);bgMusic.pause();setTimeout(()=>{if(isMusicPlaying)bgMusic.play()},3000);window.scrollTo(0,0)}else{const missing=Object.values(correctAnswers).filter(v=>!v).length;document.getElementById('remainingCount').textContent=`Mancano ${missing} risposta${missing>1?' corrette':' corretta'}!`;document.getElementById('incompleteModal').classList.add('show');playSound(soundWrong)}}
+        function tryToFinish(){const allCorrect=Object.values(correctAnswers).every(v=>v===true);if(allCorrect){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('final').classList.add('active');playSound(soundWin);inviaProgresso('completato','Ha completato il gioco',teamName);bgMusic.pause();setTimeout(()=>{if(isMusicPlaying)bgMusic.play()},3000);window.scrollTo(0,0)}else{const missing=Object.values(correctAnswers).filter(v=>!v).length;document.getElementById('remainingCount').textContent=`Mancano ${missing} risposta${missing>1?' corrette':' corretta'}!`;document.getElementById('incompleteModal').classList.add('show');playSound(soundWrong)}}
         function closeModal(){document.getElementById('incompleteModal').classList.remove('show')}
         function goToFirstIncomplete(){closeModal();const questions=[{id:'stage1q1',stage:1},{id:'stage1q2',stage:1},{id:'stage1q3',stage:1},{id:'stage2q1',stage:2},{id:'stage2q2',stage:2},{id:'stage2q3',stage:2},{id:'stage3q1',stage:3},{id:'stage3q2',stage:3},{id:'stage3q3',stage:3}];for(let q of questions){if(!correctAnswers[q.id]){nextStage(q.stage);setTimeout(()=>{const input=document.getElementById(q.id);if(input){input.focus();input.scrollIntoView({behavior:'smooth',block:'center'})}},300);break}}}
         function restartGame(){for(let key in correctAnswers)correctAnswers[key]=false;document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('registration').classList.add('active');document.getElementById('teamNameInput').value='';document.querySelectorAll('input[type="text"]').forEach(input=>{input.value='';input.disabled=false});document.querySelectorAll('.answer-container').forEach(c=>c.className='answer-container');document.querySelectorAll('.question-box').forEach(q=>q.classList.remove('completed'));document.querySelectorAll('.feedback').forEach(f=>{f.className='feedback';f.textContent=''});currentStage=0;updateProgressCounter();if(isMusicPlaying)bgMusic.play().catch(()=>{});window.scrollTo(0,0)}
