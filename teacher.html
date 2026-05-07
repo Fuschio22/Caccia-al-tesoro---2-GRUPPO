@@ -28,6 +28,7 @@
         
         .correct { color: #2e7d32; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
         .wrong { color: #c62828; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .start-game { color: #1976d2; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
         .answer-cell { background: #f5f5f5; padding: 6px 12px; border-radius: 8px; display: inline-block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; font-size: 0.9em; color: #444; }
         
         @media (max-width: 768px) { 
@@ -128,29 +129,43 @@
                 if (e.tipo === 'risposta_corretta') correct++;
                 else if (e.tipo === 'risposta_sbagliata') wrong++;
 
-                // Mostra solo le risposte (salta 'inizio' e 'completato')
-                if (e.tipo !== 'risposta_corretta' && e.tipo !== 'risposta_sbagliata') {
-                    return;
-                }
-
-                const domanda = questionMap[e.dettaglio] || e.dettaglio;
-                const risposta = pulisciRisposta(e.risposta);
+                const row = document.createElement('tr');
                 
-                let esitoHTML = '';
-                if (e.tipo === 'risposta_corretta') {
-                    esitoHTML = '<span class="correct">✅ Corretta</span>';
-                } else if (e.tipo === 'risposta_sbagliata') {
-                    esitoHTML = '<span class="wrong">❌ Errata</span>';
-                }
-
-                tbody.innerHTML += `
-                    <tr>
+                // ✅ GESTIONE DEI TRE TIPI DI EVENTO
+                if (e.tipo === 'inizio') {
+                    // Mostra inizio gioco
+                    row.innerHTML = `
+                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
+                        <td colspan="2" style="color: #1976d2; font-style: italic;">🚀 Ha iniziato a giocare</td>
+                        <td><span class="start-game">▶️ Inizio</span></td>
+                        <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
+                    `;
+                } else if (e.tipo === 'risposta_corretta' || e.tipo === 'risposta_sbagliata') {
+                    // Mostra risposta
+                    const domanda = questionMap[e.dettaglio] || e.dettaglio;
+                    const risposta = pulisciRisposta(e.risposta);
+                    const esitoHTML = e.tipo === 'risposta_corretta' 
+                        ? '<span class="correct">✅ Corretta</span>' 
+                        : '<span class="wrong">❌ Errata</span>';
+                    
+                    row.innerHTML = `
                         <td><strong>${e.teamName || 'Anonimo'}</strong></td>
                         <td>${domanda}</td>
                         <td><span class="answer-cell">${risposta}</span></td>
                         <td>${esitoHTML}</td>
                         <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
-                    </tr>`;
+                    `;
+                } else if (e.tipo === 'completato') {
+                    // Mostra completamento
+                    row.innerHTML = `
+                        <td><strong>${e.teamName || 'Anonimo'}</strong></td>
+                        <td colspan="2" style="color: #2e7d32; font-weight: bold;">🎉 HA COMPLETATO IL GIOCO!</td>
+                        <td><span class="correct">🏆 Vittoria</span></td>
+                        <td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td>
+                    `;
+                }
+
+                tbody.appendChild(row);
             });
 
             document.getElementById('totalAnswers').textContent = correct + wrong;
