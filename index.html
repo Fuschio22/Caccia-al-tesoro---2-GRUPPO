@@ -23,7 +23,7 @@
     <div class="container">
         <header>
             <h1>📚 Caccia al Tesoro Biblica</h1>
-            <p id="headerSubtitle">Un viaggio attraverso il Vangelo</p>
+            <p>Un viaggio attraverso il Vangelo</p>
             <div class="progress-counter" id="progressCounter">0/9 risposte corrette</div>
             <div class="audio-controls">
                 <button class="audio-btn" id="musicToggle" onclick="toggleMusic()">🔇</button>
@@ -44,7 +44,7 @@
 
         <div class="stage" id="welcome">
             <div class="welcome-screen">
-                <h2>Benvenuti, <span id="displayTeamName" style="color:#f093fb"></span>!</h2>
+                <h2>Benvenuti, <span id="displayTeamName"></span>!</h2>
                 <p>Preparatevi a scoprire tre momenti speciali del Vangelo.</p>
                 <div class="stages-overview">
                     <div class="stage-card"><div class="stage-number"></div><h3>L'Annunciazione</h3><p>3 domande</p></div>
@@ -76,7 +76,7 @@
         </div>
 
         <div class="stage" id="stage3">
-            <div class="stage-header"><h2>Tappa 3: L'Ultima Cena Osserva l'immagine sulla Lim</h2><p>Luca 22:14-22</p></div>
+            <div class="stage-header"><h2>Tappa 3: L'Ultima Cena - Osserva l'immagine sulla Lim</h2><p>Luca 22:14-22</p></div>
             <div style="text-align:center;margin:20px 0;padding:20px;background:#f0f0f0;border-radius:10px"><p style="font-size:1.2em;color:#555"><strong>🖼️ IMMAGINE ALLA LIM:</strong><br>L'Ultima Cena</p></div>
             <div class="question-box" id="qbox-stage3q1"><span class="question-complete">✔️</span><h3>1. Quanti apostoli ci sono?</h3><div class="answer-container" id="container-stage3q1"><div class="input-group"><input type="text" id="stage3q1" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage3q1',['12','dodici'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage3q1')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage3q1"></div></div></div>
             <div class="question-box" id="qbox-stage3q2"><span class="question-complete">✔️</span><h3>2. Chi c'è al centro?</h3><div class="answer-container" id="container-stage3q2"><div class="input-group"><input type="text" id="stage3q2" placeholder="Scrivi la risposta..."><button class="btn btn-check" onclick="checkAnswer('stage3q2',['gesù','gesu'])">✅ Verifica</button><button class="btn btn-retry" onclick="retryAnswer('stage3q2')">🔄 Riprova</button></div><div class="feedback" id="feedback-stage3q2"></div></div></div>
@@ -91,7 +91,7 @@
 
         <div class="stage" id="final">
             <div class="final-screen">
-                <h2>🎉 Complimenti, <span id="finalTeamName" style="color:#28a745"></span>!</h2>
+                <h2>🎉 Complimenti, <span id="finalTeamName"></span>!</h2>
                 <p>Avete completato la Caccia al Tesoro Biblica!<br>Risposto correttamente a tutte le 9 domande!</p>
                 <div class="stages-overview">
                     <div class="stage-card" style="background:linear-gradient(135deg,#56ab2f 0%,#a8e063 100%)"><h3>✅ L'Annunciazione</h3></div>
@@ -107,7 +107,7 @@
         <div class="modal-content">
             <h3>📖 Quasi ci siamo!</h3>
             <p>Rispondete correttamente a tutte le <strong>9 domande</strong> per sbloccare il finale!</p>
-            <p id="remainingCount" style="font-weight:bold;color:#2a5298"></p>
+            <p id="remainingCount"></p>
             <div class="modal-buttons"><button class="btn btn-prev" onclick="closeModal()">Torna a giocare</button><button class="btn btn-next" onclick="goToFirstIncomplete()">Vai alla prima domanda mancante</button></div>
         </div>
     </div>
@@ -131,18 +131,18 @@
         [bgMusic,soundCorrect,soundWrong,soundStage,soundWin].forEach(a=>a.volume=0.6);
 
         function registerTeam(){const input=document.getElementById('teamNameInput'),name=input.value.trim();if(name.length<3){alert("Nome squadra minimo 3 caratteri!");return}teamName=name;document.getElementById('displayTeamName').textContent=teamName;document.getElementById('finalTeamName').textContent=teamName;document.getElementById('registration').classList.remove('active');document.getElementById('welcome').classList.add('active')}
-        function toggleMusic(){isMusicPlaying?bgMusic.pause():bgMusic.play().catch(()=>{});isMusicPlaying=!isMusicPlaying;musicToggle.textContent=isMusicPlaying?'🔊':'🔇';musicToggle.classList.toggle('playing',isMusicPlaying)}
+        function toggleMusic(){isMusicPlaying?bgMusic.pause():bgMusic.play().catch(()=>{});isMusicPlaying=!isMusicPlaying;musicToggle.textContent=isMusicPlaying?'🔊':'';musicToggle.classList.toggle('playing',isMusicPlaying)}
         function changeVolume(v){[bgMusic,soundCorrect,soundWrong,soundStage,soundWin].forEach(a=>a.volume=parseFloat(v))}
         function playSound(sound){sound.currentTime=0;sound.play().catch(()=>{})}
         function normalizeText(t){return t.toLowerCase().trim().replace(/[.,;:!?()"'']/g,'').replace(/\s+/g,' ')}
         
-        function inviaProgresso(tipo, dettaglio, rispostaUtente) {
+        function inviaProgresso(tipo, dettaglio, risposta) {
             const totalCorrect = Object.values(correctAnswers).filter(v => v).length;
             db.ref('classroom/events').push({
                 teamName: teamName,
                 tipo: tipo,
                 dettaglio: dettaglio,
-                risposta: rispostaUtente || '',
+                risposta: risposta || '',
                 totalCorrect: totalCorrect,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
@@ -151,9 +151,16 @@
         function updateProgressCounter(){const count=Object.values(correctAnswers).filter(v=>v).length;document.getElementById('progressCounter').textContent=`${count}/9 risposte corrette`;document.getElementById('progressBar').style.width=(count/9)*100+'%'}
         
         function checkAnswer(inputId,correctAnswersList){
-            const input=document.getElementById(inputId),feedback=document.getElementById('feedback-'+inputId),container=document.getElementById('container-'+inputId),userAnswer=normalizeText(input.value);
+            const input=document.getElementById(inputId);
+            const feedback=document.getElementById('feedback-'+inputId);
+            const container=document.getElementById('container-'+inputId);
+            const userAnswer=normalizeText(input.value);
+            const userAnswerRaw=input.value.trim();
+            
             if(!userAnswer){showFeedback(feedback,'⚠️ Scrivi una risposta.','error');return}
+            
             const isCorrect=correctAnswersList.some(expected=>normalizeText(expected)===userAnswer);
+            
             if(isCorrect){
                 showFeedback(feedback,'✅ Risposta esatta!','success');
                 container.className='answer-container correct';
@@ -161,25 +168,24 @@
                 playSound(soundCorrect);
                 correctAnswers[inputId]=true;
                 updateQuestionStatus(inputId,true);
-                inviaProgresso('risposta_corretta', inputId, input.value.trim());
+                inviaProgresso('risposta_corretta', inputId, userAnswerRaw);
             }else{
                 showFeedback(feedback,'❌ Non esattamente. Riprova.','error');
                 container.className='answer-container wrong';
                 playSound(soundWrong);
                 correctAnswers[inputId]=false;
                 updateQuestionStatus(inputId,false);
-                // ✅ INVIA ANCHE GLI ERRORI A FIREBASE
-                inviaProgresso('risposta_sbagliata', inputId, input.value.trim());
+                inviaProgresso('risposta_sbagliata', inputId, userAnswerRaw);
             }
         }
 
         function updateQuestionStatus(inputId,isCorrect){const qbox=document.getElementById('qbox-'+inputId);if(qbox)qbox.classList.toggle('completed',isCorrect);updateProgressCounter()}
         function retryAnswer(inputId){const input=document.getElementById(inputId),feedback=document.getElementById('feedback-'+inputId),container=document.getElementById('container-'+inputId);input.value='';input.disabled=false;input.focus();feedback.className='feedback';feedback.textContent='';container.className='answer-container';correctAnswers[inputId]=false;updateQuestionStatus(inputId,false)}
         function showFeedback(element,message,type){element.textContent=message;element.className='feedback show '+type}
-        function startGame(){bgMusic.play().then(()=>{isMusicPlaying=true;musicToggle.textContent='🔊';musicToggle.classList.add('playing')}).catch(()=>{});document.getElementById('welcome').classList.remove('active');document.getElementById('stage1').classList.add('active');currentStage=1;playSound(soundStage);inviaProgresso('inizio',teamName)}
+        function startGame(){bgMusic.play().then(()=>{isMusicPlaying=true;musicToggle.textContent='🔊';musicToggle.classList.add('playing')}).catch(()=>{});document.getElementById('welcome').classList.remove('active');document.getElementById('stage1').classList.add('active');currentStage=1;playSound(soundStage);inviaProgresso('inizio',teamName,teamName)}
         function nextStage(n){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('stage'+n).classList.add('active');currentStage=n;playSound(soundStage);window.scrollTo(0,0)}
         function prevStage(n){nextStage(n)}
-        function tryToFinish(){const allCorrect=Object.values(correctAnswers).every(v=>v===true);if(allCorrect){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('final').classList.add('active');playSound(soundWin);inviaProgresso('completato',teamName);bgMusic.pause();setTimeout(()=>{if(isMusicPlaying)bgMusic.play()},3000);window.scrollTo(0,0)}else{const missing=Object.values(correctAnswers).filter(v=>!v).length;document.getElementById('remainingCount').textContent=`Mancano ${missing} risposta${missing>1?' corrette':' corretta'}!`;document.getElementById('incompleteModal').classList.add('show');playSound(soundWrong)}}
+        function tryToFinish(){const allCorrect=Object.values(correctAnswers).every(v=>v===true);if(allCorrect){document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('final').classList.add('active');playSound(soundWin);inviaProgresso('completato',teamName,teamName);bgMusic.pause();setTimeout(()=>{if(isMusicPlaying)bgMusic.play()},3000);window.scrollTo(0,0)}else{const missing=Object.values(correctAnswers).filter(v=>!v).length;document.getElementById('remainingCount').textContent=`Mancano ${missing} risposta${missing>1?' corrette':' corretta'}!`;document.getElementById('incompleteModal').classList.add('show');playSound(soundWrong)}}
         function closeModal(){document.getElementById('incompleteModal').classList.remove('show')}
         function goToFirstIncomplete(){closeModal();const questions=[{id:'stage1q1',stage:1},{id:'stage1q2',stage:1},{id:'stage1q3',stage:1},{id:'stage2q1',stage:2},{id:'stage2q2',stage:2},{id:'stage2q3',stage:2},{id:'stage3q1',stage:3},{id:'stage3q2',stage:3},{id:'stage3q3',stage:3}];for(let q of questions){if(!correctAnswers[q.id]){nextStage(q.stage);setTimeout(()=>{const input=document.getElementById(q.id);if(input){input.focus();input.scrollIntoView({behavior:'smooth',block:'center'})}},300);break}}}
         function restartGame(){for(let key in correctAnswers)correctAnswers[key]=false;document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));document.getElementById('registration').classList.add('active');document.getElementById('teamNameInput').value='';document.querySelectorAll('input[type="text"]').forEach(input=>{input.value='';input.disabled=false});document.querySelectorAll('.answer-container').forEach(c=>c.className='answer-container');document.querySelectorAll('.question-box').forEach(q=>q.classList.remove('completed'));document.querySelectorAll('.feedback').forEach(f=>{f.className='feedback';f.textContent=''});currentStage=0;updateProgressCounter();if(isMusicPlaying)bgMusic.play().catch(()=>{});window.scrollTo(0,0)}
