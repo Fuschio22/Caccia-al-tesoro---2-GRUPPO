@@ -87,7 +87,6 @@
         const db = firebase.database();
         const eventsRef = db.ref('classroom/events');
 
-        // ✅ FUNZIONE PER CANCELLARE TUTTI I DATI
         function clearData() {
             if (confirm("⚠️ Sei sicuro di voler cancellare TUTTE le risposte e i punteggi?")) {
                 db.ref('classroom').remove()
@@ -96,11 +95,11 @@
             }
         }
 
-        // ✅ FUNZIONE PER PULIRE LA RISPOSTA (rimuove virgolette e parentesi)
+        // ✅ FUNZIONE CORRETTA: rimuove TUTTI i caratteri speciali
         function pulisciRisposta(testo) {
             if (!testo) return '-';
-            // Rimuove doppi apici, apici singoli e parentesi tonde
-            return testo.replace(/["'()]/g, '').trim();
+            // Rimuove: virgolette "", apici ', parentesi tonde (), parentesi quadre [], parentesi graffe {}
+            return testo.replace(/["'()\[\]{}]/g, '').trim();
         }
 
         function updateDashboard(snapshot) {
@@ -135,7 +134,7 @@
                 if (e.tipo === 'risposta_corretta') { tagClass = 'tag-correct'; azioneTesto = '✅ Risposta Corretta'; }
                 if (e.tipo === 'completato') { tagClass = 'tag-complete'; azioneTesto = '🎉 Completato!'; }
 
-                // ✅ Usa la funzione pulisciRisposta per mostrare solo il testo pulito
+                // ✅ Mostra la risposta completamente pulita
                 const rispostaPulita = pulisciRisposta(e.risposta);
                 const rispostaMostrata = `<div class="risposta-box">${rispostaPulita}</div>`;
 
