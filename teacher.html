@@ -3,104 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Docente - Caccia al Tesoro</title>
-    <meta http-equiv="refresh" content="15">
+    <title>Dashboard Docente - Firebase Live</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-        .dashboard { background: white; padding: 30px; border-radius: 10px; max-width: 1200px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #2a5298; margin-bottom: 10px; }
-        .subtitle { color: #666; margin-bottom: 30px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
-        .stat-card h3 { font-size: 2.5em; margin: 10px 0; }
-        .stat-card p { opacity: 0.9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #2a5298; color: white; }
-        tr:hover { background: #f5f5f5; }
-        .completato { color: #28a745; font-weight: bold; }
-        .in-completo { color: #ff9800; }
-        .refresh { background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
-        .refresh:hover { background: #00f2fe; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        @media (max-width: 600px) { table { font-size: 0.9em; } th, td { padding: 8px; } }
+        body{font-family:Arial,sans-serif;padding:20px;background:#f5f5f5}.dashboard{background:white;padding:30px;border-radius:10px;max-width:1200px;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,0.1)}h1{color:#2a5298;margin-bottom:10px}.subtitle{color:#666;margin-bottom:30px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px}.stat-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:20px;border-radius:10px;text-align:center}.stat-card h3{font-size:2.5em;margin:10px 0}.stat-card p{opacity:0.9}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd}th{background:#2a5298;color:white}tr:hover{background:#f5f5f5}.completato{color:#28a745;font-weight:bold}.in-completo{color:#ff9800}.live-dot{height:10px;width:10px;background:#4ade80;border-radius:50%;display:inline-block;animation:blink 1s infinite;margin-right:8px}@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}.status-bar{display:flex;align-items:center;margin-bottom:20px;font-size:0.9em;color:#666}@media(max-width:600px){table{font-size:0.9em}th,td{padding:8px}}
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <h1>📊 Dashboard Docente</h1>
-        <p class="subtitle">Monitoraggio in tempo reale - Caccia al Tesoro Biblica</p>
-        <button class="refresh" onclick="caricaDati()">🔄 Aggiorna ora</button>
-        
-        <div class="stats" id="stats">
-            <div class="stat-card"><h3 id="totalStudents">0</h3><p>Studenti Totali</p></div>
+        <h1>📊 Dashboard Docente - Monitoraggio Live</h1>
+        <div class="status-bar"><span class="live-dot"></span>Connessione Firebase attiva | Aggiornamento in tempo reale</div>
+        <div class="stats">
+            <div class="stat-card"><h3 id="totalTeams">0</h3><p>Squadre Attive</p></div>
             <div class="stat-card"><h3 id="completed">0</h3><p>Hanno Completato</p></div>
             <div class="stat-card"><h3 id="inProgress">0</h3><p>In Corso</p></div>
-            <div class="stat-card"><h3 id="avgScore">0%</h3><p>Punteggio Medio</p></div>
+            <div class="stat-card"><h3 id="avgCorrect">0/9</h3><p>Media Risposte Corrette</p></div>
         </div>
-
-        <div id="dati" class="loading">Caricamento dati...</div>
+        <table id="dataTable"><thead><tr><th>Ora</th><th>Squadra</th><th>Azione</th><th>Dettaglio</th><th>Progresso</th></tr></thead><tbody id="tableBody"></tbody></table>
     </div>
-
     <script>
-        const SHEET_URL = 'https://script.google.com/macros/s/TUO-ID-QUI/exec';
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYP-ylPtgkLAOreahgQZhG8VKuhpkp4Ro",
+            authDomain: "caccia-al-tesoro---2-gruppo.firebaseapp.com",
+            projectId: "caccia-al-tesoro---2-gruppo",
+            storageBucket: "caccia-al-tesoro---2-gruppo.firebasestorage.app",
+            messagingSenderId: "690362723053",
+            appId: "1:690362723053:web:e46ea14fa18daf44957ae4",
+            databaseURL: "https://caccia-al-tesoro---2-gruppo-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const eventsRef = db.ref('classroom/events');
 
-        async function caricaDati() {
-            try {
-                const response = await fetch(SHEET_URL);
-                const dati = await response.json();
-                visualizzaDati(dati);
-            } catch (error) {
-                document.getElementById('dati').innerHTML = '<p style="color: red;">Errore caricamento. Verifica l\'URL di Google Apps Script.</p>';
-            }
-        }
-
-        function visualizzaDati(dati) {
-            if (!dati || dati.length <= 1) {
-                document.getElementById('dati').innerHTML = '<p>Nessun dato disponibile. Gli studenti devono ancora iniziare.</p>';
-                updateStats([]);
-                return;
-            }
-
-            const studentiUnici = [...new Set(dati.slice(1).map(row => row[1]))];
-            const completati = new Set();
-            let totalScore = 0;
-
-            dati.slice(1).forEach(row => {
-                if (row[3] === 'completato') completati.add(row[1]);
-                if (row[2] && row[2].includes('/9')) {
-                    const score = parseInt(row[2].split('/')[0]);
-                    totalScore += score;
-                }
+        function updateDashboard(snapshot){
+            const data = snapshot.val();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            if(!data){document.getElementById('totalTeams').textContent='0';document.getElementById('completed').textContent='0';document.getElementById('inProgress').textContent='0';document.getElementById('avgCorrect').textContent='0/9';return}
+            const events = Object.values(data).sort((a,b)=>a.timestamp-b.timestamp);
+            const teams = new Set(events.map(e=>e.teamName));
+            const completedTeams = new Set(events.filter(e=>e.tipo==='completato').map(e=>e.teamName));
+            let totalCorrect=0,countWithCorrect=0;
+            events.slice().reverse().forEach(e=>{
+                const date = new Date(e.timestamp).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                const isCompleted = e.tipo==='completato';
+                totalCorrect += e.totalCorrect||0; countWithCorrect++;
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${date}</td><td><strong>${e.teamName}</strong></td><td>${e.tipo==='inizio'?'🚀 Inizio':e.tipo==='completato'?'🎉 Completato':'✅ Risposta corretta'}</td><td>${e.dettaglio||'-'}</td><td class="${isCompleted?'completato':'in-completo'}">${e.totalCorrect||0}/9</td>`;
+                tbody.appendChild(row);
             });
-
-            updateStats(studentiUnici, completati.size, totalScore / (dati.length - 1) || 0);
-
-            let html = '<table><thead><tr><th>Studente</th><th>Tipo</th><th>Dettaglio</th><th>Ora</th></tr></thead><tbody>';
-            
-            dati.slice(1).reverse().forEach(row => {
-                const classe = row[3] === 'completato' ? 'completato' : 'in-completo';
-                html += `<tr>
-                    <td><strong>${row[1]}</strong></td>
-                    <td>${row[2]}</td>
-                    <td class="${classe}">${row[3]}</td>
-                    <td>${new Date(row[4]).toLocaleString('it-IT')}</td>
-                </tr>`;
-            });
-            
-            html += '</tbody></table>';
-            document.getElementById('dati').innerHTML = html;
+            const avg = countWithCorrect>0 ? (totalCorrect/countWithCorrect).toFixed(1):0;
+            document.getElementById('totalTeams').textContent = teams.size;
+            document.getElementById('completed').textContent = completedTeams.size;
+            document.getElementById('inProgress').textContent = teams.size - completedTeams.size;
+            document.getElementById('avgCorrect').textContent = `${avg}/9`;
         }
-
-        function updateStats(students, completed, avgScore) {
-            document.getElementById('totalStudents').textContent = students ? students.length : 0;
-            document.getElementById('completed').textContent = completed || 0;
-            document.getElementById('inProgress').textContent = (students ? students.length : 0) - (completed || 0);
-            document.getElementById('avgScore').textContent = Math.round(avgScore || 0) + '%';
-        }
-
-        caricaDati();
-        setInterval(caricaDati, 15000);
+        eventsRef.on('value', updateDashboard);
     </script>
 </body>
 </html>
