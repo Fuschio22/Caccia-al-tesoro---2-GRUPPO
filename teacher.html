@@ -23,7 +23,16 @@
         .correct { color: #2e7d32; font-weight: 600; }
         .wrong { color: #c62828; font-weight: 600; }
         .start { color: #1976d2; font-weight: 600; font-style: italic; }
-        .answer-cell { background: #f5f5f5; padding: 6px 12px; border-radius: 8px; display: inline-block; font-family: monospace; font-size: 0.9em; }
+        .answer-cell { 
+            background: #f5f5f5; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            display: inline-block; 
+            font-family: 'Georgia', serif; 
+            font-size: 1em; 
+            color: #222;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -83,20 +92,16 @@
                 if (e.tipo === 'risposta_corretta') correct++;
                 else if (e.tipo === 'risposta_sbagliata') wrong++;
 
-                // ✅ LOGICA DEFINITIVA DI VISUALIZZAZIONE
                 if (e.tipo === 'inizio') {
-                    // RIGA SPECIALE PER L'INIZIO
                     tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td colspan="3" class="start">🚀 Ha iniziato a giocare</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
                 } 
                 else if (e.tipo === 'risposta_corretta' || e.tipo === 'risposta_sbagliata') {
-                    // RIGA STANDARD PER LE RISPOSTE
                     const domanda = questionMap[e.dettaglio] || e.dettaglio;
                     const risposta = pulisciRisposta(e.risposta);
                     const esito = e.tipo === 'risposta_corretta' ? '<span class="correct">✅ Corretta</span>' : '<span class="wrong">❌ Errata</span>';
                     tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td>${domanda}</td><td><span class="answer-cell">${risposta}</span></td><td>${esito}</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
                 }
                 else if (e.tipo === 'completato') {
-                    // RIGA PER COMPLETAMENTO
                     tbody.innerHTML += `<tr><td><strong>${e.teamName || 'Anonimo'}</strong></td><td colspan="3" class="correct">🎉 HA COMPLETATO IL GIOCO!</td><td>${new Date(e.timestamp).toLocaleTimeString('it-IT')}</td></tr>`;
                 }
             });
