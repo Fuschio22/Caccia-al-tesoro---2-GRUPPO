@@ -14,9 +14,9 @@
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; min-width: 160px; flex: 1; }
         .stat-card h3 { margin: 0; font-size: 2.2em; color: #2e7d32; font-weight: 700; }
         .stat-card p { margin: 8px 0 0; color: #666; font-size: 0.95em; font-weight: 500; }
-        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; transition: background 0.2s; }
-        .btn-clear:hover { background: #c62828; }
-        .btn-clear:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
+        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; transition: all 0.3s; }
+        .btn-clear:hover { background: #c62828; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn-clear:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1a237e; color: white; padding: 16px 15px; text-align: left; font-weight: 600; }
@@ -35,7 +35,7 @@
             color: #222;
             font-weight: 500;
         }
-        .empty-state { text-align: center; padding: 40px; color: #666; font-style: italic; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; font-style: italic; font-size: 1.1em; }
     </style>
 </head>
 <body>
@@ -73,7 +73,7 @@
         }
         const db = firebase.database();
         
-        // Riferimento univoco al nodo events (coerente con il listener)
+        // Riferimento al nodo events
         const eventsRef = db.ref('classroom/events');
 
         const questionMap = {
@@ -82,7 +82,12 @@
             'stage3q1': 'Quanti apostoli ci sono?', 'stage3q2': 'Chi c\'è al centro?', 'stage3q3': 'Cosa ci lascia Gesù?'
         };
 
-        // Funzione helper per aggiornare le statistiche
+        // Funzione per pulire la risposta
+        function pulisciRisposta(t) { 
+            return t && t !== '-' ? t.replace(/["'()\[\]{}]/g, '').trim() : '-'; 
+        }
+
+        // Funzione per aggiornare tutte le statistiche
         function updateStats(correct, wrong, teamsCount) {
             document.getElementById('totalAnswers').textContent = correct + wrong;
             document.getElementById('correctAnswers').textContent = correct;
@@ -90,8 +95,8 @@
             document.getElementById('activeStudents').textContent = teamsCount;
         }
 
-        // Funzione per resettare completamente UI e stats
-        function clearTable() {
+        // Funzione per resettare completamente la dashboard
+        function resetDashboard() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nessun dato disponibile</td></tr>';
             updateStats(0, 0, 0);
@@ -110,15 +115,16 @@
             btn.disabled = true;
             btn.innerHTML = '⏳ Elimino...';
             
+            // Elimina i dati da Firebase
             eventsRef.remove()
                 .then(() => {
                     // Il listener 'value' si attiverà automaticamente con data=null
-                    // e chiamerà clearTable(), ma forziamo un update immediato per sicurezza
-                    alert("✅ Dati eliminati con successo!");
+                    // e chiamerà resetDashboard(), quindi non facciamo nulla qui
+                    console.log("✅ Dati eliminati con successo da Firebase");
                 })
                 .catch(error => {
-                    console.error("Errore Firebase:", error);
-                    alert("❌ Errore durante l'eliminazione: " + error.message);
+                    console.error("❌ Errore Firebase:", error);
+                    alert("Errore durante l'eliminazione: " + error.message);
                 })
                 .finally(() => {
                     // Ripristina sempre il pulsante
@@ -127,18 +133,15 @@
                 });
         }
 
-        function pulisciRisposta(t) { 
-            return t && t !== '-' ? t.replace(/["'()\[\]{}]/g, '').trim() : '-'; 
-        }
-
         // Listener principale - si attiva ad ogni cambiamento nel DB
         eventsRef.on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('tableBody');
             
-            // CASO 1: Nessun dato → resetta tutto
-            if (!data) {
-                clearTable();
+            // CASO 1: Nessun dato → resetta COMPLETAMENTE la dashboard
+            if (!data || Object.keys(data).length === 0) {
+                console.log("📭 Nessun dato presente, dashboard resettata");
+                resetDashboard();
                 return;
             }
 
@@ -170,9 +173,10 @@
 
             // Aggiorna statistiche
             updateStats(correct, wrong, teams.size);
+            console.log(`📊 Dati caricati: ${correct + wrong} risposte, ${teams.size} team`);
         });
 
-        // Cleanup: rimuovi listener quando la pagina viene chiusa (best practice)
+        // Cleanup: rimuovi listener quando la pagina viene chiusa
         window.addEventListener('beforeunload', () => {
             eventsRef.off();
         });
