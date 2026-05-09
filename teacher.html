@@ -14,7 +14,9 @@
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; min-width: 160px; flex: 1; }
         .stat-card h3 { margin: 0; font-size: 2.2em; color: #2e7d32; font-weight: 700; }
         .stat-card p { margin: 8px 0 0; color: #666; font-size: 0.95em; font-weight: 500; }
-        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; }
+        .btn-clear { background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-bottom: 20px; transition: background 0.2s; }
+        .btn-clear:hover { background: #c62828; }
+        .btn-clear:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
         .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1a237e; color: white; padding: 16px 15px; text-align: left; font-weight: 600; }
@@ -33,6 +35,7 @@
             color: #222;
             font-weight: 500;
         }
+        .empty-state { text-align: center; padding: 40px; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
@@ -44,11 +47,11 @@
             <div class="stat-card"><h3 id="wrongAnswers">0</h3><p>Sbagliate</p></div>
             <div class="stat-card"><h3 id="activeStudents">0</h3><p>Studenti attivi</p></div>
         </div>
-        <button class="btn-clear" onclick="clearData()">🗑️ Svuota tutto</button>
+        <button class="btn-clear" id="clearBtn" onclick="clearData()">🗑️ Svuota tutto</button>
         <div class="table-container">
             <table>
                 <thead><tr><th>Studente</th><th>Domanda</th><th>Risposta data</th><th>Esito</th><th>Ora</th></tr></thead>
-                <tbody id="tableBody"></tbody>
+                <tbody id="tableBody"><tr><td colspan="5" class="empty-state">Nessun dato disponibile</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -63,8 +66,15 @@
             appId: "1:690362723053:web:e46ea14fa18daf44957ae4",
             databaseURL: "https://caccia-al-tesoro---2-gruppo-default-rtdb.europe-west1.firebasedatabase.app"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        // Inizializza Firebase solo se non è già stato fatto
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
+        
+        // Riferimento univoco al nodo events (coerente con il listener)
+        const eventsRef = db.ref('classroom/events');
 
         const questionMap = {
             'stage1q1': 'Chi è l\'angelo?', 'stage1q2': 'Cosa annuncia a Maria?', 'stage1q3': 'Qual è la risposta di Maria?',
@@ -72,21 +82,73 @@
             'stage3q1': 'Quanti apostoli ci sono?', 'stage3q2': 'Chi c\'è al centro?', 'stage3q3': 'Cosa ci lascia Gesù?'
         };
 
-        function clearData() {
-            if (confirm("⚠️ Sei sicuro?")) { db.ref('classroom').remove().then(() => alert("Dati puliti!")); }
+        // Funzione helper per aggiornare le statistiche
+        function updateStats(correct, wrong, teamsCount) {
+            document.getElementById('totalAnswers').textContent = correct + wrong;
+            document.getElementById('correctAnswers').textContent = correct;
+            document.getElementById('wrongAnswers').textContent = wrong;
+            document.getElementById('activeStudents').textContent = teamsCount;
         }
 
-        function pulisciRisposta(t) { return t && t !== '-' ? t.replace(/["'()\[\]{}]/g, '').trim() : '-'; }
+        // Funzione per resettare completamente UI e stats
+        function clearTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nessun dato disponibile</td></tr>';
+            updateStats(0, 0, 0);
+        }
 
-        db.ref('classroom/events').on('value', snap => {
+        // Funzione principale di eliminazione dati
+        function clearData() {
+            if (!confirm("⚠️ Sei sicuro di voler eliminare TUTTI i dati? Questa azione è irreversibile.")) {
+                return;
+            }
+            
+            const btn = document.getElementById('clearBtn');
+            const originalText = btn.innerHTML;
+            
+            // Disabilita pulsante durante l'operazione
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Elimino...';
+            
+            eventsRef.remove()
+                .then(() => {
+                    // Il listener 'value' si attiverà automaticamente con data=null
+                    // e chiamerà clearTable(), ma forziamo un update immediato per sicurezza
+                    alert("✅ Dati eliminati con successo!");
+                })
+                .catch(error => {
+                    console.error("Errore Firebase:", error);
+                    alert("❌ Errore durante l'eliminazione: " + error.message);
+                })
+                .finally(() => {
+                    // Ripristina sempre il pulsante
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+        }
+
+        function pulisciRisposta(t) { 
+            return t && t !== '-' ? t.replace(/["'()\[\]{}]/g, '').trim() : '-'; 
+        }
+
+        // Listener principale - si attiva ad ogni cambiamento nel DB
+        eventsRef.on('value', snap => {
             const data = snap.val();
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            if (!data) { document.getElementById('totalAnswers').textContent = '0'; document.getElementById('activeStudents').textContent = '0'; return; }
+            
+            // CASO 1: Nessun dato → resetta tutto
+            if (!data) {
+                clearTable();
+                return;
+            }
 
+            // CASO 2: Ci sono dati → popola tabella e stats
             const events = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
             const teams = new Set(events.map(e => e.teamName));
             let correct = 0, wrong = 0;
+            
+            // Pulisci la tabella prima di inserire nuovi dati
+            tbody.innerHTML = '';
 
             events.forEach(e => {
                 if (e.tipo === 'risposta_corretta') correct++;
@@ -106,10 +168,13 @@
                 }
             });
 
-            document.getElementById('totalAnswers').textContent = correct + wrong;
-            document.getElementById('correctAnswers').textContent = correct;
-            document.getElementById('wrongAnswers').textContent = wrong;
-            document.getElementById('activeStudents').textContent = teams.size;
+            // Aggiorna statistiche
+            updateStats(correct, wrong, teams.size);
+        });
+
+        // Cleanup: rimuovi listener quando la pagina viene chiusa (best practice)
+        window.addEventListener('beforeunload', () => {
+            eventsRef.off();
         });
     </script>
 </body>
