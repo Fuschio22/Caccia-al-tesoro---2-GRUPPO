@@ -171,7 +171,6 @@
                 playSound(soundCorrect);
                 correctAnswers[inputId]=true;
                 updateQuestionStatus(inputId,true);
-                // ✅ INVIA LA RISPOSTA CORRETTA
                 inviaProgresso('risposta_corretta', inputId, userAnswerRaw);
             }else{
                 showFeedback(feedback,'❌ Non esattamente. Riprova.','error');
@@ -179,7 +178,6 @@
                 playSound(soundWrong);
                 correctAnswers[inputId]=false;
                 updateQuestionStatus(inputId,false);
-                // ✅ INVIA LA RISPOSTA SBAGLIATA (FONDAMENTALE)
                 inviaProgresso('risposta_sbagliata', inputId, userAnswerRaw);
             }
         }
@@ -194,7 +192,6 @@
             document.getElementById('stage1').classList.add('active');
             currentStage=1;
             playSound(soundStage);
-            // ✅ INVIO SEGNALAZIONE INIZIO GIOCO ESPRESSA
             inviaProgresso('inizio', 'Ha iniziato il gioco', teamName);
         }
 
